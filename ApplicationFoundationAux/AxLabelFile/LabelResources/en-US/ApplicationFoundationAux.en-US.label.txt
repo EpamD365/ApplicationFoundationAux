@@ -1,0 +1,2 @@
+﻿IMailWillBeSent=The current report will be sent to %1 via %2 as attached PDF file
+EMailSendinFailed=There is a problem with report sending. Please contact your system administrator

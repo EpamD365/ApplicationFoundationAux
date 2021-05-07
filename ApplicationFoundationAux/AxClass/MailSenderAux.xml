@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>MailSenderAux</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class MailSenderAux
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>enqueueMail</Name>
+				<Source><![CDATA[
+    public boolean enqueueMail(SysEmailRecipients    _toEmailAddr,
+                               SysEmailTable         _emailTemplate,
+                               SysEmailMessageTable  _emailMessage,
+                               SysEmailParameters    _emailParameters,
+                               Str                   _subject,
+                               Filename              _filename,
+                               container             _fileBinData)
+    
+    {
+        FileIOPermission        fileIOPermission;
+        SysOutgoingEmailTable   outgoingEmailTable;
+        SysOutgoingEmailData    outgoingEmailData;
+        SysEmailItemId          nextEmailItemId;
+        SysEmailContents        messageBody;
+        Map                     tagSubstitutionMap;
+        container               data;
+        List                    list;
+        ListEnumerator          enumerator;
+        Filename                htmlDecodedFileName;
+        BinData                 binData;
+        container               embeddedBinaryData;
+        Counter                 counter;
+        Filename                filePath;
+        Filename                filename;
+        Filename                fileExtension;
+        ;
+    
+        counter         = 1;
+        nextEmailItemId = EventInbox::nextEventId();
+        messageBody     = _emailMessage.Mail;
+        ttsBegin;
+
+        SysEmailParameters emailParameters = SysEmailParameters::find();
+    
+        outgoingEmailTable.EmailItemId      = nextEmailItemId;
+        outgoingEmailTable.TemplateId       = _emailTemplate.EmailId;
+        outgoingEmailTable.IsSystemEmail    = NoYes::No;
+        outgoingEmailTable.Sender           = emailParameters.SMTPUserName;
+        outgoingEmailTable.SenderName       = _emailTemplate.SenderName;
+        outgoingEmailTable.Recipient        = _toEmailAddr;
+        outgoingEmailTable.Origin           = _emailTemplate.Description;
+        outgoingEmailTable.Message          = messageBody;
+    
+        outgoingEmailData.clear();
+        outgoingEmailData.initValue();
+
+        outgoingEmailData.EmailItemId       = nextEmailItemId;
+        outgoingEmailData.DataId            = counter;
+        outgoingEmailData.EmailDataType     = SysEmailDataType::Embedded;
+        outgoingEmailData.Data              = _fileBinData;
+        [filePath, filename, fileExtension] = Global::fileNameSplit(_filename);
+            
+        outgoingEmailData.FileName      = int642str(nextEmailItemId) + '_' + int2str(counter);
+        outgoingEmailData.FileExtension = fileExtension;
+            
+        outgoingEmailData.insert();
+               
+        outgoingEmailTable.Subject      = _subject;
+    
+        outgoingEmailTable.Priority     = _emailTemplate.Priority;
+        outgoingEmailTable.WithRetries  = true;
+        outgoingEmailTable.RetryNum     = 0;
+        outgoingEmailTable.UserId       = curuserid();
+        outgoingEmailTable.Status       = SysEmailStatus::Unsent;
+    
+        outgoingEmailTable.LatestStatusChangeDateTime = DateTimeUtil::getSystemDateTime();
+        outgoingEmailTable.insert();
+    
+        ttsCommit;
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>sendMail</Name>
+				<Source><![CDATA[
+    public void sendMail(SysEmailAddress    _toEmailAddr,
+                         str                _filePath,
+                         SysEmailSubject    _subject,
+                         SysEmailContents   _body,
+                         container          _binData)
+    
+    {
+        SysEmailParameters          emailParameters;
+        SysEmailMessageTable        emailMessage;
+        LanguageId                  languageId;
+        SysEmailTable               emailTemplate;
+        boolean                     isExecutionSuccessfull;
+        ;
+    
+        emailParameters = SysEmailParameters::find();
+    
+        emailMessage = SysEmailMessageTable::find(emailTemplate.EmailId, languageId);
+    
+        if (_body)
+        {
+            emailMessage.Mail = _body;
+        }
+    
+        isExecutionSuccessfull = this.enqueueMail(_toEmailAddr, emailTemplate, emailMessage, emailParameters, _subject, _filePath, _binData);
+    
+        if (isExecutionSuccessfull)
+        {
+            info(strFmt("@ApplicationFoundationAux:IMailWillBeSent", _toEmailAddr, "@SYS94142")); // The current report will be sent to %1 via %2 as attached PDF file
+        }
+        else
+        {
+            throw error(strFmt("@ApplicationFoundationAux:EMailSendinFailed")); // There is a problem with report sending. Please contact your system administrator
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>attachFile</Name>
+				<Source><![CDATA[
+    private boolean attachFile(SysEmailItemId              _nextEmailItemId,
+                               SysOutgoingEmailData        _outgoingEmailData,
+                               Filename                    _path,
+                               SysEmailParameters          _emailParameters,
+                               Counter                     _counter)
+    
+    {
+        Filename                filePath;
+        Filename                fileName;
+        Filename                fileExtension;
+        
+        if (this.fileSize(_path) < (_emailParameters.MaxEmailAttachmentSize * 1000000))
+        {
+            [filePath, filename, fileExtension] = Global::fileNameSplit(_path);
+            _outgoingEmailData.EmailItemId       = _nextEmailItemId;
+            _outgoingEmailData.DataId            = _counter;
+            _outgoingEmailData.EmailDataType     = SysEmailDataType::Attachment;
+            _outgoingEmailData.Data              = this.loadFileData(_path);
+            _outgoingEmailData.FileName          = fileName;
+            _outgoingEmailData.FileExtension     = fileExtension;
+            _outgoingEmailData.insert();
+            
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>fileExists</Name>
+				<Source><![CDATA[
+    protected boolean fileExists(Filename _filename)
+    {
+        return WinAPI::fileExists(_filename);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>fileSize</Name>
+				<Source><![CDATA[
+    protected int fileSize(Filename _filename)
+    {
+        return WinAPI::fileSize(_filename);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEmailLanguageId</Name>
+				<Source><![CDATA[
+    private LanguageId getEmailLanguageId(SysEmailTable _emailTemplate)
+    {
+        LanguageId ret;
+        
+        ret = _emailTemplate.DefaultLanguage;
+        
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>loadFileData</Name>
+				<Source><![CDATA[
+    protected container loadFileData(Filename _path)
+    {
+        BinData                 binData;
+        container               embeddedBinaryData;
+        
+        binData = new BinData();
+        binData.loadFile(_path);
+        embeddedBinaryData = binData.getData();
+        binData.finalize();
+        binData = null;
+        
+        return embeddedBinaryData;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

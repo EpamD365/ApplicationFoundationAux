@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>PrintMgmtSettingsAux_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// PrintMgmtSettings class.
+/// </summary>
+[ExtensionOf(tableStr(PrintMgmtSettings))]
+final class PrintMgmtSettingsAux_Extension
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>printDestinationSettingsAux</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Returns SRSPrintDestinationSettings record
+    /// </summary>
+    /// <returns>SRSPrintDestinationSettings</returns>
+    public SRSPrintDestinationSettings printDestinationSettingsAux()
+    {
+        SRSPrintDestinationSettings res;
+
+        res = this.PrintJobSettings == conNull() ? null : new SRSPrintDestinationSettings(this.PrintJobSettings);
+
+        return res;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByType</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Returns PrintMgmtSettings record found by report type and name.
+    /// </summary>
+    /// <param name = "_type">PrintMgmtDocumentType</param>
+    /// <param name = "_name">PrintMgmtReportFormatName</param>
+    /// <returns>PrintMgmtSettings</returns>
+    public static PrintMgmtSettings findByType(PrintMgmtDocumentType _type, PrintMgmtReportFormatName _name)
+    {
+        CompanyInfo companyInfo = CompanyInfo::find();
+
+        PrintMgmtReportFormat reportFormat;
+
+        reportFormat = PrintMgmtReportFormat::findByType(_type, _name, companyInfo.countryRegionIdAux());
+
+        PrintMgmtSettings printMgmtSettings;
+
+        select firstonly printMgmtSettings
+            where printMgmtSettings.ReportFormat == reportFormat.RecId;
+
+        return printMgmtSettings;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>existByType</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Returns true if record found by report type and name.
+    /// </summary>
+    /// <param name = "_type">PrintMgmtDocumentType</param>
+    /// <param name = "_name">PrintMgmtReportFormatName</param>
+    /// <returns>true if exists</returns>
+    public static boolean existByType(PrintMgmtDocumentType _type, PrintMgmtReportFormatName _name)
+    {
+        CompanyInfo companyInfo = CompanyInfo::find();
+
+        PrintMgmtReportFormat reportFormat;
+
+        reportFormat = PrintMgmtReportFormat::findByType(_type, _name, companyInfo.countryRegionIdAux());
+
+        PrintMgmtSettings printMgmtSettings;
+
+        select firstonly RecId from printMgmtSettings
+            where printMgmtSettings.ReportFormat == reportFormat.RecId;
+
+        return printMgmtSettings.RecId != 0;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>
