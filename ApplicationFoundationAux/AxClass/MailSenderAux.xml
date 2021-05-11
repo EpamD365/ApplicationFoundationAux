@@ -20,7 +20,7 @@ public class MailSenderAux
                                container             _fileBinData)
     
     {
-        FileIOPermission        fileIOPermission;
+        FileIOPermission        fileIOPermission; ///
         SysOutgoingEmailTable   outgoingEmailTable;
         SysOutgoingEmailData    outgoingEmailData;
         SysEmailItemId          nextEmailItemId;
