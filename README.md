@@ -1,3 +1,3 @@
 # Application Foundation Aux
 
-Auxiliary model for standard ApplicationFoundation model
+Auxiliary model for standard ApplicationFoundation model.
