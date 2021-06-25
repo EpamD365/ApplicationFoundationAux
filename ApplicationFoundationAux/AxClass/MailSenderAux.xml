@@ -11,7 +11,7 @@ public class MailSenderAux
 			<Method>
 				<Name>enqueueMail</Name>
 				<Source><![CDATA[
-    public boolean enqueueMail(SysEmailRecipients    _toEmailAddr,
+    public SysEmailItemId enqueueMail(SysEmailRecipients    _toEmailAddr,
                                SysEmailTable         _emailTemplate,
                                SysEmailMessageTable  _emailMessage,
                                SysEmailParameters    _emailParameters,
@@ -80,7 +80,8 @@ public class MailSenderAux
         outgoingEmailTable.insert();
     
         ttsCommit;
-        return true;
+
+        return outgoingEmailTable.EmailItemId;
     }
 
 ]]></Source>
@@ -88,32 +89,33 @@ public class MailSenderAux
 			<Method>
 				<Name>sendMail</Name>
 				<Source><![CDATA[
-    public void sendMail(SysEmailAddress    _toEmailAddr,
+    public SysEmailItemId sendMail(SysEmailAddress    _toEmailAddr,
                          str                _filePath,
                          SysEmailSubject    _subject,
                          SysEmailContents   _body,
-                         container          _binData)
-    
+                         container          _binData,
+                         SysEmailId         _emailId = '',
+                         LanguageId         _languageId = 'en-US')    
     {
         SysEmailParameters          emailParameters;
         SysEmailMessageTable        emailMessage;
         LanguageId                  languageId;
         SysEmailTable               emailTemplate;
-        boolean                     isExecutionSuccessfull;
+        SysEmailItemId              emailItemId;
         ;
     
         emailParameters = SysEmailParameters::find();
     
-        emailMessage = SysEmailMessageTable::find(emailTemplate.EmailId, languageId);
+        emailMessage = SysEmailMessageTable::find(_emailId, _languageId);
     
         if (_body)
         {
             emailMessage.Mail = _body;
         }
     
-        isExecutionSuccessfull = this.enqueueMail(_toEmailAddr, emailTemplate, emailMessage, emailParameters, _subject, _filePath, _binData);
+        emailItemId = this.enqueueMail(_toEmailAddr, emailTemplate, emailMessage, emailParameters, _subject, _filePath, _binData);
     
-        if (isExecutionSuccessfull)
+        if (emailItemId != 0)
         {
             info(strFmt("@ApplicationFoundationAux:IMailWillBeSent", _toEmailAddr, "@SYS94142")); // The current report will be sent to %1 via %2 as attached PDF file
         }
@@ -121,6 +123,8 @@ public class MailSenderAux
         {
             throw error(strFmt("@ApplicationFoundationAux:EMailSendinFailed")); // There is a problem with report sending. Please contact your system administrator
         }
+
+        return emailItemId;
     }
 
 ]]></Source>
