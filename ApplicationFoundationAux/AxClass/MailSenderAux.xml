@@ -17,7 +17,8 @@ public class MailSenderAux
                                SysEmailParameters    _emailParameters,
                                Str                   _subject,
                                Filename              _filename,
-                               container             _fileBinData)
+                               container             _fileBinData,
+                               SysEmailStatus        _emailStatus = SysEmailStatus::Unsent)
     
     {
         FileIOPermission        fileIOPermission; ///
@@ -74,7 +75,7 @@ public class MailSenderAux
         outgoingEmailTable.WithRetries  = true;
         outgoingEmailTable.RetryNum     = 0;
         outgoingEmailTable.UserId       = curuserid();
-        outgoingEmailTable.Status       = SysEmailStatus::Unsent;
+        outgoingEmailTable.Status       = _emailStatus;
     
         outgoingEmailTable.LatestStatusChangeDateTime = DateTimeUtil::getSystemDateTime();
         outgoingEmailTable.insert();
@@ -95,7 +96,8 @@ public class MailSenderAux
                          SysEmailContents   _body,
                          container          _binData,
                          SysEmailId         _emailId = '',
-                         LanguageId         _languageId = 'en-US')    
+                         LanguageId         _languageId = 'en-US',
+                         SysEmailStatus     _emailStatus = SysEmailStatus::Unsent)
     {
         SysEmailParameters          emailParameters;
         SysEmailMessageTable        emailMessage;
@@ -113,7 +115,7 @@ public class MailSenderAux
             emailMessage.Mail = _body;
         }
     
-        emailItemId = this.enqueueMail(_toEmailAddr, emailTemplate, emailMessage, emailParameters, _subject, _filePath, _binData);
+        emailItemId = this.enqueueMail(_toEmailAddr, emailTemplate, emailMessage, emailParameters, _subject, _filePath, _binData, _emailStatus);
     
         if (emailItemId != 0)
         {
