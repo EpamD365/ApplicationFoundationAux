@@ -21,9 +21,9 @@ final class PrintMgmtSettingsAux_Extension
     /// <returns>SRSPrintDestinationSettings</returns>
     public SRSPrintDestinationSettings printDestinationSettingsAux()
     {
-        SRSPrintDestinationSettings res;
+        SRSPrintDestinationSettings res;  
 
-        res = this.PrintJobSettings == conNull() ? null : new SRSPrintDestinationSettings(this.PrintJobSettings);
+        res = new SRSPrintDestinationSettings(this.PrintJobSettings);
 
         return res;
     }
