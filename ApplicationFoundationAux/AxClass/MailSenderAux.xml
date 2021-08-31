@@ -3,6 +3,9 @@
 	<Name>MailSenderAux</Name>
 	<SourceCode>
 		<Declaration><![CDATA[
+/// <summary>
+/// Mail sending auxiliary.
+/// </summary>
 public class MailSenderAux
 {
 }
@@ -11,6 +14,18 @@ public class MailSenderAux
 			<Method>
 				<Name>enqueueMail</Name>
 				<Source><![CDATA[
+    /// <summary>
+    /// Puts the mail into the mail queue.
+    /// </summary>
+    /// <param name = "_toEmailAddr">to email address.</param>
+    /// <param name = "_emailTemplate">email template.</param>
+    /// <param name = "_emailMessage">email message.</param>
+    /// <param name = "_emailParameters">email parameters.</param>
+    /// <param name = "_subject">mail subject.</param>
+    /// <param name = "_filename">filename.</param>
+    /// <param name = "_fileBinData">attachment.</param>
+    /// <param name = "_emailStatus">email default status.</param>
+    /// <returns>email item id.</returns>
     public SysEmailItemId enqueueMail(SysEmailRecipients    _toEmailAddr,
                                SysEmailTable         _emailTemplate,
                                SysEmailMessageTable  _emailMessage,
@@ -21,18 +36,10 @@ public class MailSenderAux
                                SysEmailStatus        _emailStatus = SysEmailStatus::Unsent)
     
     {
-        FileIOPermission        fileIOPermission; ///
         SysOutgoingEmailTable   outgoingEmailTable;
         SysOutgoingEmailData    outgoingEmailData;
         SysEmailItemId          nextEmailItemId;
         SysEmailContents        messageBody;
-        Map                     tagSubstitutionMap;
-        container               data;
-        List                    list;
-        ListEnumerator          enumerator;
-        Filename                htmlDecodedFileName;
-        BinData                 binData;
-        container               embeddedBinaryData;
         Counter                 counter;
         Filename                filePath;
         Filename                filename;
@@ -90,6 +97,18 @@ public class MailSenderAux
 			<Method>
 				<Name>sendMail</Name>
 				<Source><![CDATA[
+    /// <summary>
+    /// Sends mail.
+    /// </summary>
+    /// <param name = "_toEmailAddr">to email address.</param>
+    /// <param name = "_filePath">filepath.</param>
+    /// <param name = "_subject">subject.</param>
+    /// <param name = "_body">body.</param>
+    /// <param name = "_binData">attachment.</param>
+    /// <param name = "_emailId">email template id.</param>
+    /// <param name = "_languageId">language id.</param>
+    /// <param name = "_emailStatus">email default status.</param>
+    /// <returns>email item id.</returns>
     public SysEmailItemId sendMail(SysEmailAddress    _toEmailAddr,
                          str                _filePath,
                          SysEmailSubject    _subject,
@@ -101,7 +120,6 @@ public class MailSenderAux
     {
         SysEmailParameters          emailParameters;
         SysEmailMessageTable        emailMessage;
-        LanguageId                  languageId;
         SysEmailTable               emailTemplate;
         SysEmailItemId              emailItemId;
         ;
@@ -123,7 +141,7 @@ public class MailSenderAux
         }
         else
         {
-            throw error(strFmt("@ApplicationFoundationAux:EMailSendinFailed")); // There is a problem with report sending. Please contact your system administrator
+            throw error("@ApplicationFoundationAux:EMailSendinFailed"); // There is a problem with report sending. Please contact your system administrator
         }
 
         return emailItemId;
@@ -134,6 +152,15 @@ public class MailSenderAux
 			<Method>
 				<Name>attachFile</Name>
 				<Source><![CDATA[
+    /// <summary>
+    /// Attaches file.
+    /// </summary>
+    /// <param name = "_nextEmailItemId">email item id.</param>
+    /// <param name = "_outgoingEmailData">mail data.</param>
+    /// <param name = "_path">path.</param>
+    /// <param name = "_emailParameters">email parameters.</param>
+    /// <param name = "_counter">counter.</param>
+    /// <returns>true if success.</returns>
     private boolean attachFile(SysEmailItemId              _nextEmailItemId,
                                SysOutgoingEmailData        _outgoingEmailData,
                                Filename                    _path,
@@ -169,9 +196,14 @@ public class MailSenderAux
 			<Method>
 				<Name>fileExists</Name>
 				<Source><![CDATA[
+    /// <summary>
+    /// checks if file exists.
+    /// </summary>
+    /// <param name = "_filename">filename.</param>
+    /// <returns>true if exists.</returns>
     protected boolean fileExists(Filename _filename)
     {
-        return WinAPI::fileExists(_filename);
+        return System.IO.File::Exists(_filename);
     }
 
 ]]></Source>
@@ -179,9 +211,16 @@ public class MailSenderAux
 			<Method>
 				<Name>fileSize</Name>
 				<Source><![CDATA[
+    /// <summary>
+    /// gets size of file.
+    /// </summary>
+    /// <param name = "_filename">filename.</param>
+    /// <returns>size as int.</returns>
     protected int fileSize(Filename _filename)
     {
-        return WinAPI::fileSize(_filename);
+        System.IO.FileInfo fi = new System.IO.FileInfo(_fileName);
+
+        return System.Convert::ToInt32(fi.Length);
     }
 
 ]]></Source>
@@ -189,6 +228,11 @@ public class MailSenderAux
 			<Method>
 				<Name>getEmailLanguageId</Name>
 				<Source><![CDATA[
+    /// <summary>
+    /// Gets email language id.
+    /// </summary>
+    /// <param name = "_emailTemplate">template.</param>
+    /// <returns>language id.</returns>
     private LanguageId getEmailLanguageId(SysEmailTable _emailTemplate)
     {
         LanguageId ret;
@@ -203,6 +247,11 @@ public class MailSenderAux
 			<Method>
 				<Name>loadFileData</Name>
 				<Source><![CDATA[
+    /// <summary>
+    /// Loads binary data from file.
+    /// </summary>
+    /// <param name = "_path">filepath.</param>
+    /// <returns>binary data as container.</returns>
     protected container loadFileData(Filename _path)
     {
         BinData                 binData;
